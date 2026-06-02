@@ -36,12 +36,17 @@ classDiagram
         -QVector~CollisionEvent~ m_collisionEvents
         -double m_deltaTime
         -double m_totalTime
+        -Vector2D m_gravity
         +setupDefaultScenario()
+        +setParticleLaunch(int,double,double) bool
         +run()
         +exportTextFiles(QString) bool
+        -updateMotion(Particle)
         -resolveWallCollisions(Particle)
         -resolveObstacleCollisions(Particle)
         -resolveParticleCollisions()
+        -circleIntersectsRect(Particle,QRectF,Vector2D,double) bool
+        -obstacleSideFromNormal(Vector2D) QString
     }
 
     class TrajectoryWidget {

@@ -2,15 +2,21 @@
 
 #include <QDir>
 #include <QFile>
+#include <QStringList>
 #include <QTextStream>
 #include <algorithm>
 #include <cmath>
+
+namespace {
+constexpr double PI = 3.14159265358979323846;
+}
 
 Simulation::Simulation()
     : m_bounds(0.0, 0.0, 800.0, 500.0),
       m_deltaTime(0.016),
       m_totalTime(24.0),
-      m_currentTime(0.0)
+      m_currentTime(0.0),
+      m_gravity(0.0, 12.0)
 {
 }
 
@@ -36,6 +42,25 @@ void Simulation::setupDefaultScenario()
     saveCurrentPositions();
 }
 
+bool Simulation::setParticleLaunch(int particleId, double angleDegrees, double speed)
+{
+    for (Particle &particle : m_particles) {
+        if (particle.id() != particleId) {
+            continue;
+        }
+
+        const double radians = angleDegrees * PI / 180.0;
+        const Vector2D velocity(speed * std::cos(radians), -speed * std::sin(radians));
+        particle.setVelocity(velocity);
+
+        m_trajectories[particle.id()].clear();
+        saveCurrentPositions();
+        return true;
+    }
+
+    return false;
+}
+
 void Simulation::run()
 {
     while (m_currentTime < m_totalTime) {
@@ -56,7 +81,7 @@ bool Simulation::exportTextFiles(const QString &directoryPath) const
     }
 
     QTextStream trajectoryOut(&trajectoryFile);
-    trajectoryOut << "tiempo,id_particula,x,y,vx,vy,masa,radio\n";
+    trajectoryOut << "tiempo,id_particula,x,y,vx,vy,ax,ay,masa,radio\n";
     for (const Particle &particle : m_particles) {
         const QVector<TrajectoryPoint> points = m_trajectories.value(particle.id());
         for (const TrajectoryPoint &point : points) {
@@ -66,6 +91,8 @@ bool Simulation::exportTextFiles(const QString &directoryPath) const
                           << QString::number(point.position.y, 'f', 3) << ","
                           << QString::number(point.velocity.x, 'f', 3) << ","
                           << QString::number(point.velocity.y, 'f', 3) << ","
+                          << QString::number(point.acceleration.x, 'f', 3) << ","
+                          << QString::number(point.acceleration.y, 'f', 3) << ","
                           << QString::number(point.mass, 'f', 3) << ","
                           << QString::number(point.radius, 'f', 3) << "\n";
         }
@@ -120,13 +147,26 @@ void Simulation::step()
             continue;
         }
 
-        particle.move(m_deltaTime);
+        updateMotion(particle);
         resolveWallCollisions(particle);
         resolveObstacleCollisions(particle);
     }
 
     resolveParticleCollisions();
     saveCurrentPositions();
+}
+
+void Simulation::updateMotion(Particle &particle)
+{
+    const Vector2D position = particle.position();
+    const Vector2D velocity = particle.velocity();
+
+    const Vector2D nextPosition =
+        position + velocity * m_deltaTime + m_gravity * (0.5 * m_deltaTime * m_deltaTime);
+    const Vector2D nextVelocity = velocity + m_gravity * m_deltaTime;
+
+    particle.setPosition(nextPosition);
+    particle.setVelocity(nextVelocity);
 }
 
 void Simulation::saveCurrentPositions()
@@ -139,6 +179,7 @@ void Simulation::saveCurrentPositions()
         m_trajectories[particle.id()].append({m_currentTime,
                                               particle.position(),
                                               particle.velocity(),
+                                              m_gravity,
                                               particle.mass(),
                                               particle.radius()});
     }
@@ -148,32 +189,34 @@ void Simulation::resolveWallCollisions(Particle &particle)
 {
     Vector2D position = particle.position();
     Vector2D velocity = particle.velocity();
-    bool collided = false;
+    QStringList collidedSides;
 
     if (position.x - particle.radius() < m_bounds.left()) {
         position.x = m_bounds.left() + particle.radius();
         velocity.x = std::abs(velocity.x);
-        collided = true;
+        collidedSides.append("izquierda");
     } else if (position.x + particle.radius() > m_bounds.right()) {
         position.x = m_bounds.right() - particle.radius();
         velocity.x = -std::abs(velocity.x);
-        collided = true;
+        collidedSides.append("derecha");
     }
 
     if (position.y - particle.radius() < m_bounds.top()) {
         position.y = m_bounds.top() + particle.radius();
         velocity.y = std::abs(velocity.y);
-        collided = true;
+        collidedSides.append("superior");
     } else if (position.y + particle.radius() > m_bounds.bottom()) {
         position.y = m_bounds.bottom() - particle.radius();
         velocity.y = -std::abs(velocity.y);
-        collided = true;
+        collidedSides.append("inferior");
     }
 
-    if (collided) {
+    if (!collidedSides.isEmpty()) {
         particle.setPosition(position);
         particle.setVelocity(velocity);
-        logCollision(QString("Particula %1 reboto elasticamente contra una pared").arg(particle.id()));
+        logCollision(QString("Particula %1 reboto elasticamente contra pared %2")
+                         .arg(particle.id())
+                         .arg(collidedSides.join(" y ")));
     }
 }
 
@@ -189,12 +232,14 @@ void Simulation::resolveObstacleCollisions(Particle &particle)
         Vector2D velocity = particle.velocity();
         const double normalSpeed = velocity.dot(normal);
         if (normalSpeed < 0.0) {
+            const QString side = obstacleSideFromNormal(normal);
             velocity = velocity - normal * ((1.0 + obstacle.restitution()) * normalSpeed);
             particle.setVelocity(velocity);
             particle.setPosition(particle.position() + normal * (penetration + 0.05));
-            logCollision(QString("Particula %1 choco inelasticamente con obstaculo %2 (e=%3)")
+            logCollision(QString("Particula %1 choco inelasticamente con obstaculo %2 por el lado %3 (e=%4)")
                              .arg(particle.id())
                              .arg(obstacle.id())
+                             .arg(side)
                              .arg(obstacle.restitution(), 0, 'f', 2));
         } else {
             particle.setPosition(particle.position() + normal * (penetration + 0.05));
@@ -280,6 +325,15 @@ bool Simulation::circleIntersectsRect(const Particle &particle,
     }
     *penetration = particle.radius() + minExit;
     return true;
+}
+
+QString Simulation::obstacleSideFromNormal(const Vector2D &normal) const
+{
+    if (std::abs(normal.x) >= std::abs(normal.y)) {
+        return normal.x < 0.0 ? "izquierdo" : "derecho";
+    }
+
+    return normal.y < 0.0 ? "superior" : "inferior";
 }
 
 void Simulation::logCollision(const QString &description)

@@ -14,6 +14,7 @@ struct TrajectoryPoint
     double time;
     Vector2D position;
     Vector2D velocity;
+    Vector2D acceleration;
     double mass;
     double radius;
 };
@@ -30,6 +31,7 @@ public:
     Simulation();
 
     void setupDefaultScenario();
+    bool setParticleLaunch(int particleId, double angleDegrees, double speed);
     void run();
     bool exportTextFiles(const QString &directoryPath) const;
 
@@ -41,11 +43,13 @@ public:
 
 private:
     void step();
+    void updateMotion(Particle &particle);
     void saveCurrentPositions();
     void resolveWallCollisions(Particle &particle);
     void resolveObstacleCollisions(Particle &particle);
     void resolveParticleCollisions();
     bool circleIntersectsRect(const Particle &particle, const QRectF &rect, Vector2D *normal, double *penetration) const;
+    QString obstacleSideFromNormal(const Vector2D &normal) const;
     void logCollision(const QString &description);
 
     QRectF m_bounds;
@@ -56,6 +60,7 @@ private:
     double m_deltaTime;
     double m_totalTime;
     double m_currentTime;
+    Vector2D m_gravity;
 };
 
 #endif

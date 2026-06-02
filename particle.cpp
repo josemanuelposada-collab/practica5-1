@@ -95,5 +95,5 @@ void Particle::absorb(const Particle &other)
     m_position = combinedPosition;
     m_velocity = combinedVelocity;
     m_mass = combinedMass;
-    m_radius = std::min(18.0, std::sqrt(combinedMass) * 7.0);
+    m_radius = std::sqrt(m_radius * m_radius + other.m_radius * other.m_radius);
 }
