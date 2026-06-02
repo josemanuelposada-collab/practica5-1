@@ -1,0 +1,10 @@
+build/
+build*/
+.qtcreator/
+*.pro.user
+*.exe
+*.o
+*.obj
+debug/
+release/
+salida/
