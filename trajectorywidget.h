@@ -21,6 +21,8 @@ protected:
 private:
     QPointF toScreen(const Vector2D &point, const QRectF &canvas) const;
     void drawSimulation(QPainter &painter, const QRectF &canvas, int frame);
+    void drawHeader(QPainter &painter, const QRectF &canvas) const;
+    void drawLegend(QPainter &painter, const QRectF &canvas) const;
     int maxFrameCount() const;
     void advanceAnimation();
 

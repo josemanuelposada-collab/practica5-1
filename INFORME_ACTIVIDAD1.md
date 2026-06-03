@@ -84,6 +84,7 @@ El programa genera:
 
 - `trayectorias.csv`: posiciones, velocidades, aceleracion, masa y radio en cada instante.
 - `colisiones.txt`: registro de colisiones con tiempo, descripcion, pared impactada o lado del obstaculo.
+- `resumen.txt`: parametros de simulacion y conteos de trayectorias y colisiones.
 - `trayectorias.png`: grafica final de trayectorias.
 
 ## Clases principales

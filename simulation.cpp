@@ -110,6 +110,51 @@ bool Simulation::exportTextFiles(const QString &directoryPath) const
         collisionOut << QString::number(event.time, 'f', 3) << " | " << event.description << "\n";
     }
 
+    QFile summaryFile(dir.filePath("resumen.txt"));
+    if (!summaryFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        return false;
+    }
+
+    int activeParticles = 0;
+    int trajectoryRows = 0;
+    int wallCollisions = 0;
+    int obstacleCollisions = 0;
+    int particleCollisions = 0;
+
+    for (const Particle &particle : m_particles) {
+        if (particle.isActive()) {
+            ++activeParticles;
+        }
+        trajectoryRows += m_trajectories.value(particle.id()).size();
+    }
+
+    for (const CollisionEvent &event : m_collisionEvents) {
+        if (event.description.contains("pared")) {
+            ++wallCollisions;
+        } else if (event.description.contains("obstaculo")) {
+            ++obstacleCollisions;
+        } else if (event.description.contains("Particulas")) {
+            ++particleCollisions;
+        }
+    }
+
+    QTextStream summaryOut(&summaryFile);
+    summaryOut << "Resumen de simulacion\n";
+    summaryOut << "Caja: " << QString::number(m_bounds.width(), 'f', 1)
+               << " x " << QString::number(m_bounds.height(), 'f', 1) << "\n";
+    summaryOut << "Delta de tiempo: " << QString::number(m_deltaTime, 'f', 3) << "\n";
+    summaryOut << "Tiempo total: " << QString::number(m_totalTime, 'f', 3) << "\n";
+    summaryOut << "Aceleracion: ax=" << QString::number(m_gravity.x, 'f', 3)
+               << ", ay=" << QString::number(m_gravity.y, 'f', 3) << "\n";
+    summaryOut << "Particulas configuradas: " << m_particles.size() << "\n";
+    summaryOut << "Particulas activas al final: " << activeParticles << "\n";
+    summaryOut << "Obstaculos: " << m_obstacles.size() << "\n";
+    summaryOut << "Filas de trayectoria: " << trajectoryRows << "\n";
+    summaryOut << "Colisiones totales: " << m_collisionEvents.size() << "\n";
+    summaryOut << "Colisiones con paredes: " << wallCollisions << "\n";
+    summaryOut << "Colisiones con obstaculos: " << obstacleCollisions << "\n";
+    summaryOut << "Colisiones entre particulas: " << particleCollisions << "\n";
+
     return true;
 }
 

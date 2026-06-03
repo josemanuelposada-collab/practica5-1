@@ -26,7 +26,7 @@ bool TrajectoryWidget::saveImage(const QString &filePath, const QSize &imageSize
     QPainter painter(&image);
     painter.setRenderHint(QPainter::Antialiasing, true);
     drawSimulation(painter,
-                   QRectF(50.0, 50.0, imageSize.width() - 100.0, imageSize.height() - 110.0),
+                   QRectF(50.0, 78.0, imageSize.width() - 100.0, imageSize.height() - 160.0),
                    maxFrameCount() - 1);
     return image.save(filePath);
 }
@@ -38,7 +38,7 @@ void TrajectoryWidget::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.fillRect(rect(), QColor("#f8f9fa"));
-    drawSimulation(painter, QRectF(45.0, 45.0, width() - 90.0, height() - 95.0), m_currentFrame);
+    drawSimulation(painter, QRectF(45.0, 76.0, width() - 90.0, height() - 145.0), m_currentFrame);
 }
 
 QPointF TrajectoryWidget::toScreen(const Vector2D &point, const QRectF &canvas) const
@@ -56,6 +56,8 @@ void TrajectoryWidget::drawSimulation(QPainter &painter, const QRectF &canvas, i
     const QRectF bounds = m_simulation.bounds();
     const double xScale = canvas.width() / bounds.width();
     const double yScale = canvas.height() / bounds.height();
+
+    drawHeader(painter, canvas);
 
     painter.setPen(QPen(QColor("#1f2937"), 2));
     painter.setBrush(Qt::NoBrush);
@@ -111,6 +113,58 @@ void TrajectoryWidget::drawSimulation(QPainter &painter, const QRectF &canvas, i
         const QPointF currentPoint = toScreen(points[lastIndex].position, canvas);
         const double radius = std::max(4.0, points[lastIndex].radius * (xScale + yScale) * 0.5);
         painter.drawEllipse(currentPoint, radius, radius);
+    }
+
+    drawLegend(painter, canvas);
+}
+
+void TrajectoryWidget::drawHeader(QPainter &painter, const QRectF &canvas) const
+{
+    QFont titleFont = painter.font();
+    titleFont.setPointSize(14);
+    titleFont.setBold(true);
+    painter.setFont(titleFont);
+    painter.setPen(QColor("#111827"));
+    painter.drawText(QRectF(canvas.left(), canvas.top() - 48.0, canvas.width(), 24.0),
+                     Qt::AlignLeft | Qt::AlignVCenter,
+                     "Trayectorias de particulas - Actividad 1");
+
+    QFont detailFont = painter.font();
+    detailFont.setPointSize(9);
+    detailFont.setBold(false);
+    painter.setFont(detailFont);
+    painter.setPen(QColor("#4b5563"));
+    painter.drawText(QRectF(canvas.left(), canvas.top() - 24.0, canvas.width(), 20.0),
+                     Qt::AlignLeft | Qt::AlignVCenter,
+                     QString("Obstaculos: %1 | Colisiones registradas: %2")
+                         .arg(m_simulation.obstacles().size())
+                         .arg(m_simulation.collisionEvents().size()));
+}
+
+void TrajectoryWidget::drawLegend(QPainter &painter, const QRectF &canvas) const
+{
+    const QVector<Particle> particles = m_simulation.particles();
+    const double legendTop = canvas.bottom() + 18.0;
+    const double itemWidth = 150.0;
+
+    QFont legendFont = painter.font();
+    legendFont.setPointSize(9);
+    legendFont.setBold(false);
+    painter.setFont(legendFont);
+
+    for (int i = 0; i < particles.size(); ++i) {
+        const Particle &particle = particles[i];
+        const double x = canvas.left() + (i % 5) * itemWidth;
+        const double y = legendTop + (i / 5) * 24.0;
+
+        painter.setPen(QPen(QColor("#111827"), 1));
+        painter.setBrush(particle.color());
+        painter.drawEllipse(QPointF(x + 8.0, y + 8.0), 6.0, 6.0);
+
+        painter.setPen(QColor("#111827"));
+        painter.drawText(QRectF(x + 22.0, y, itemWidth - 24.0, 18.0),
+                         Qt::AlignLeft | Qt::AlignVCenter,
+                         QString("Particula %1").arg(particle.id()));
     }
 }
 

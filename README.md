@@ -18,11 +18,12 @@ Esta version cubre la parte marcada como **companero**:
 - Colisiones con paredes perfectamente elasticas.
 - Colisiones particula-obstaculo inelasticas con coeficiente de restitucion.
 - Colisiones particula-particula completamente inelasticas, con fusion de masas y conservacion del momento lineal.
-- Exportacion de datos a `salida/trayectorias.csv` y `salida/colisiones.txt`.
+- Exportacion de datos a `salida/trayectorias.csv`, `salida/colisiones.txt` y `salida/resumen.txt`.
 - Animacion de las particulas con `QTimer` y grafica de trayectorias con Qt.
-- Exportacion de la grafica final a `salida/trayectorias.png`.
+- Exportacion de la grafica final a `salida/trayectorias.png`, con titulo, leyenda y conteo de colisiones.
 - Diagrama de clases en `DIAGRAMA_CLASES.md`.
 - Informe de implementacion en `INFORME_ACTIVIDAD1.md`.
+- Escenarios de verificacion en `ESCENARIOS_VERIFICACION.md`.
 
 ## Como ejecutarlo
 
