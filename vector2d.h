@@ -1,70 +1,31 @@
-#ifndef VECTOR2D_H
-#define VECTOR2D_H
+#ifndef VECTOR2_H
+#define VECTOR2_H
 
-#include <QtGlobal>
 #include <cmath>
 
-class Vector2D
+class Vector2
 {
 public:
     double x;
     double y;
 
-    Vector2D(double xValue = 0.0, double yValue = 0.0)
-        : x(xValue), y(yValue)
-    {
-    }
+    Vector2();
+    Vector2(double xValue, double yValue);
 
-    double length() const
-    {
-        return std::sqrt(x * x + y * y);
-    }
+    double length() const;
+    double lengthSquared() const;
+    Vector2 normalized() const;
 
-    double lengthSquared() const
-    {
-        return x * x + y * y;
-    }
+    Vector2 operator+(const Vector2 &other) const;
+    Vector2 operator-(const Vector2 &other) const;
+    Vector2 operator*(double scalar) const;
+    Vector2 operator/(double scalar) const;
 
-    Vector2D normalized() const
-    {
-        const double len = length();
-        if (qFuzzyIsNull(len)) {
-            return Vector2D();
-        }
-        return Vector2D(x / len, y / len);
-    }
+    Vector2 &operator+=(const Vector2 &other);
+    Vector2 &operator-=(const Vector2 &other);
+    Vector2 &operator*=(double scalar);
 
-    double dot(const Vector2D &other) const
-    {
-        return x * other.x + y * other.y;
-    }
-
-    Vector2D operator+(const Vector2D &other) const
-    {
-        return Vector2D(x + other.x, y + other.y);
-    }
-
-    Vector2D operator-(const Vector2D &other) const
-    {
-        return Vector2D(x - other.x, y - other.y);
-    }
-
-    Vector2D operator*(double scalar) const
-    {
-        return Vector2D(x * scalar, y * scalar);
-    }
-
-    Vector2D operator/(double scalar) const
-    {
-        return Vector2D(x / scalar, y / scalar);
-    }
-
-    Vector2D &operator+=(const Vector2D &other)
-    {
-        x += other.x;
-        y += other.y;
-        return *this;
-    }
+    static double dot(const Vector2 &a, const Vector2 &b);
 };
 
 #endif

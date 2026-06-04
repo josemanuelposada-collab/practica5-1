@@ -6,16 +6,21 @@
 class Obstacle
 {
 public:
-    Obstacle(int obstacleId = 0, const QRectF &rectangle = QRectF(), double restitution = 0.65);
+    Obstacle();
+    Obstacle(int id, const QRectF &rect, double restitution, double resistance = 100.0);
 
     int id() const;
     QRectF rect() const;
     double restitution() const;
+    double resistance() const;
+
+    void setResistance(double resistance);
 
 private:
     int m_id;
     QRectF m_rect;
     double m_restitution;
+    double m_resistance;
 };
 
 #endif

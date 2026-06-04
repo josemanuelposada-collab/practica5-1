@@ -1,62 +1,86 @@
-# Diagrama de clases - Actividad 1
+# Diagrama de clases
 
 ```mermaid
 classDiagram
-    class Vector2D {
+    class Vector2 {
         +double x
         +double y
         +length() double
-        +normalized() Vector2D
-        +dot(Vector2D) double
+        +normalized() Vector2
+        +dot(Vector2, Vector2) double
     }
 
     class Particle {
         -int m_id
-        -Vector2D m_position
-        -Vector2D m_velocity
+        -Vector2 m_position
+        -Vector2 m_velocity
         -double m_mass
         -double m_radius
-        -QColor m_color
-        -bool m_active
-        +move(double)
-        +absorb(Particle)
+        -QString m_label
+        +move(double dt)
+        +position() Vector2
+        +velocity() Vector2
+        +mass() double
+        +radius() double
     }
 
     class Obstacle {
         -int m_id
         -QRectF m_rect
         -double m_restitution
+        -double m_resistance
+        +rect() QRectF
+        +restitution() double
+        +resistance() double
     }
 
-    class Simulation {
-        -QRectF m_bounds
-        -QVector~Particle~ m_particles
-        -QVector~Obstacle~ m_obstacles
-        -QMap~int,QVector~TrajectoryPoint~~ m_trajectories
-        -QVector~CollisionEvent~ m_collisionEvents
-        -double m_deltaTime
-        -double m_totalTime
-        -Vector2D m_gravity
-        +setupDefaultScenario()
-        +setParticleLaunch(int,double,double) bool
+    class CollisionEvent {
+        -double m_time
+        -QString m_type
+        -QString m_description
+        +time() double
+        +type() QString
+        +description() QString
+    }
+
+    class SimulationConfig {
+        +double width
+        +double height
+        +double dt
+        +double duration
+        +double obstacleRestitution
+    }
+
+    class CollisionSimulator {
+        -SimulationConfig m_config
+        -QList~Particle~ m_particles
+        -QList~Obstacle~ m_obstacles
+        -QList~CollisionEvent~ m_events
+        -QList~QString~ m_positionRows
+        -double m_time
+        +addParticle(Particle)
+        +addObstacle(Obstacle)
         +run()
-        +exportTextFiles(QString) bool
-        -updateMotion(Particle)
-        -resolveWallCollisions(Particle)
-        -resolveObstacleCollisions(Particle)
-        -resolveParticleCollisions()
-        -circleIntersectsRect(Particle,QRectF,Vector2D,double) bool
-        -obstacleSideFromNormal(Vector2D) QString
+        +step()
     }
 
-    class TrajectoryWidget {
-        -Simulation m_simulation
-        +saveImage(QString,QSize) bool
-        #paintEvent(QPaintEvent)
+    class VentanaSimulacion {
+        -CollisionSimulator m_simulator
+        -QGraphicsScene m_scene
+        -QGraphicsView m_view
+        -QTimer m_timer
+        -QListWidget m_eventList
+        +reiniciarSimulacion()
+        +avanzarSimulacion(int)
+        +dibujarEscena()
     }
 
-    Simulation "1" o-- "*" Particle
-    Simulation "1" o-- "4" Obstacle
-    Particle --> Vector2D
-    TrajectoryWidget --> Simulation
+    Particle --> Vector2
+    CollisionSimulator o-- Particle
+    CollisionSimulator o-- Obstacle
+    CollisionSimulator o-- CollisionEvent
+    CollisionSimulator --> SimulationConfig
+    VentanaSimulacion --> CollisionSimulator
 ```
+
+Este diseno separa el motor fisico de la visualizacion. `VentanaSimulacion` llama `CollisionSimulator::step()` desde un `QTimer` y dibuja cada `Particle` en la escena de Qt.
